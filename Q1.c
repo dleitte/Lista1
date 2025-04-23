@@ -28,7 +28,6 @@ int compare(const void *a, const void *b) {
     else return 0;
 }
 
-// Agora recebe um FILE * como parâmetro
 void process_line(char *line, FILE *fp_out) {
     Point original[MAX_POINTS], sorted[MAX_POINTS];
     int count = 0;
