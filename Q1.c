@@ -28,7 +28,8 @@ int compare(const void *a, const void *b) {
     else return 0;
 }
 
-void process_line(char *line) {
+// Agora recebe um FILE * como parâmetro
+void process_line(char *line, FILE *fp_out) {
     Point original[MAX_POINTS], sorted[MAX_POINTS];
     int count = 0;
     int x, y;
@@ -45,9 +46,9 @@ void process_line(char *line) {
 
     qsort(sorted, count, sizeof(Point), compare);
 
-    printf("points");
+    fprintf(fp_out, "points");
     for (int i = 0; i < count; i++) {
-        printf(" (%d,%d)", sorted[i].x, sorted[i].y);
+        fprintf(fp_out, " (%d,%d)", sorted[i].x, sorted[i].y);
     }
 
     double total = 0.0;
@@ -57,23 +58,25 @@ void process_line(char *line) {
 
     double shortcut = distance(original[0], original[count-1]);
 
-    printf(" distance %.2f shortcut %.2f\n", total, shortcut);
+    fprintf(fp_out, " distance %.2f shortcut %.2f\n", total, shortcut);
 }
 
 int main() {
-    FILE *f = fopen("L0Q1.in", "r");
-    if (!f) {
+    FILE *fp_in = fopen("L0Q1.in", "r");
+    FILE *fp_out = fopen("L0Q1.out", "w");
+    if (fp_in == NULL || fp_out == NULL) {
         perror("Erro ao abrir o arquivo");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     char line[MAX_LINE];
-    while (fgets(line, sizeof(line), f)) {
+    while (fgets(line, sizeof(line), fp_in)) {
         if (strstr(line, "points") != NULL) {
-            process_line(line);
+            process_line(line, fp_out);
         }
     }
 
-    fclose(f);
+    fclose(fp_in);
+    fclose(fp_out);
     return 0;
 }
