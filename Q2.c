@@ -1,19 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <ctype.h>
+#include <math.h>
 
-#define MAX_TOKENS 200
-#define MAX_STR_LEN 64
-#define MAX_LINE_LEN 1024
+#define MAX_LINE 1024
+#define MAX_TOKENS 128
 
 typedef struct {
-    float x, y;
-} Ponto;
+    double x, y;
+    double dist;
+    char original[32];
+} Point;
 
-float distancia(Ponto p) {
-    return sqrtf(p.x * p.x + p.y * p.y);
+int is_integer(const char *s) {
+    char *end;
+    strtol(s, &end, 10);
+    return *end == '\0';
+}
+
+int is_float(const char *s) {
+    char *end;
+    strtod(s, &end);
+    return *end == '\0' && strchr(s, '.');
+}
+
+int is_point(const char *s, double *x, double *y, char *original) {
+    if (s[0] != '(' || s[strlen(s) - 1] != ')') return 0;
+    char temp[64];
+    strncpy(temp, s + 1, strlen(s) - 2);
+    temp[strlen(s) - 2] = '\0';
+    char *comma = strchr(temp, ',');
+    if (!comma) return 0;
+    *comma = '\0';
+    char *xstr = temp;
+    char *ystr = comma + 1;
+    char *end1, *end2;
+    *x = strtod(xstr, &end1);
+    *y = strtod(ystr, &end2);
+    if (*end1 || *end2) return 0;
+    strcpy(original, s);
+    return 1;
 }
 
 int cmp_str(const void *a, const void *b) {
@@ -21,132 +48,90 @@ int cmp_str(const void *a, const void *b) {
 }
 
 int cmp_int(const void *a, const void *b) {
-    return (*(const int *)a - *(const int *)b);
+    return (*(int *)a - *(int *)b);
 }
 
-int cmp_float(const void *a, const void *b) {
-    float f1 = *(const float *)a, f2 = *(const float *)b;
-    if (f1 < f2) return -1;
-    if (f1 > f2) return 1;
-    return 0;
+int cmp_double(const void *a, const void *b) {
+    double diff = *(double *)a - *(double *)b;
+    if (diff < 0) return -1;
+    else if (diff > 0) return 1;
+    else return 0;
 }
 
-int cmp_ponto(const void *a, const void *b) {
-    float d1 = distancia(*(const Ponto *)a);
-    float d2 = distancia(*(const Ponto *)b);
+int cmp_point(const void *a, const void *b) {
+    double d1 = ((Point *)a)->dist;
+    double d2 = ((Point *)b)->dist;
     if (d1 < d2) return -1;
-    if (d1 > d2) return 1;
-    return 0;
+    else if (d1 > d2) return 1;
+    else return 0;
 }
 
-int tentar_ler_ponto(const char *str, Ponto *p) {
-    float x, y;
-    int res = sscanf(str, "(%f,%f)", &x, &y);
-    if (res == 2) {
-        p->x = x;
-        p->y = y;
-        return 1;
-    }
-    return 0;
-}
+int main() {
+    char line[MAX_LINE];
 
-void limpar_token(char *token) {
-    int i, j = 0;
-    char temp[MAX_STR_LEN];
-    for (i = 0; token[i]; i++) {
-        if (!isspace((unsigned char)token[i])) {
-            temp[j++] = token[i];
-        }
-    }
-    temp[j] = '\0';
-    strcpy(token, temp);
-}
-
-int main(void) {
-    char linha[MAX_LINE_LEN];
-
-    char *strings[MAX_TOKENS];
-    int inteiros[MAX_TOKENS];
-    float reais[MAX_TOKENS];
-    Ponto pontos[MAX_TOKENS];
-
-    while (fgets(linha, sizeof(linha), stdin)) {
-        int qtd_str = 0, qtd_int = 0, qtd_float = 0, qtd_ponto = 0;
+    while (fgets(line, sizeof(line), stdin)) {
+        line[strcspn(line, "\n")] = '\0';
 
         char *tokens[MAX_TOKENS];
-        int n_tokens = 0;
-
-        char *token = strtok(linha, " ");
-        while (token && n_tokens < MAX_TOKENS) {
-            limpar_token(token);
-            tokens[n_tokens++] = token;
+        int num_tokens = 0;
+        char *token = strtok(line, " ");
+        while (token) {
+            tokens[num_tokens++] = token;
             token = strtok(NULL, " ");
         }
 
-        int i = 0;
-        while (i < n_tokens) {
-            Ponto p;
-            char combinado[MAX_STR_LEN * 3];
+        char *strings[MAX_TOKENS];
+        int ints[MAX_TOKENS], num_ints = 0;
+        double floats[MAX_TOKENS];
+        int num_str = 0, num_float = 0;
+        Point points[MAX_TOKENS];
+        int num_points = 0;
 
-            if (i + 2 < n_tokens) {
-                snprintf(combinado, sizeof(combinado), "%s%s%s", tokens[i], tokens[i+1], tokens[i+2]);
-                limpar_token(combinado);
-                if (tentar_ler_ponto(combinado, &p)) {
-                    pontos[qtd_ponto++] = p;
-                    i += 3;
-                    continue;
-                }
+        for (int i = 0; i < num_tokens; i++) {
+            double x, y;
+            char original[32];
+            if (is_point(tokens[i], &x, &y, original)) {
+                points[num_points].x = x;
+                points[num_points].y = y;
+                points[num_points].dist = sqrt(x * x + y * y);
+                strcpy(points[num_points].original, original);
+                num_points++;
+            } else if (is_integer(tokens[i])) {
+                ints[num_ints++] = atoi(tokens[i]);
+            } else if (is_float(tokens[i])) {
+                floats[num_float++] = atof(tokens[i]);
+            } else {
+                strings[num_str++] = tokens[i];
             }
-
-            if (tentar_ler_ponto(tokens[i], &p)) {
-                pontos[qtd_ponto++] = p;
-                i++;
-                continue;
-            }
-
-            int valor_int;
-            if (sscanf(tokens[i], "%d", &valor_int) == 1 && strchr(tokens[i], '.') == NULL) {
-                inteiros[qtd_int++] = valor_int;
-                i++;
-                continue;
-            }
-
-            float valor_float;
-            if (sscanf(tokens[i], "%f", &valor_float) == 1 && strchr(tokens[i], '.') != NULL) {
-                reais[qtd_float++] = valor_float;
-                i++;
-                continue;
-            }
-
-            strings[qtd_str] = strdup(tokens[i]);
-            qtd_str++;
-            i++;
         }
 
-        qsort(strings, qtd_str, sizeof(char *), cmp_str);
-        qsort(inteiros, qtd_int, sizeof(int), cmp_int);
-        qsort(reais, qtd_float, sizeof(float), cmp_float);
-        qsort(pontos, qtd_ponto, sizeof(Ponto), cmp_ponto);
+        qsort(strings, num_str, sizeof(char *), cmp_str);
+        qsort(ints, num_ints, sizeof(int), cmp_int);
+        qsort(floats, num_float, sizeof(double), cmp_double);
+        qsort(points, num_points, sizeof(Point), cmp_point);
 
         printf("str:");
-        for (int i = 0; i < qtd_str; i++) {
-            printf("%s%s", (i ? " " : ""), strings[i]);
-            free(strings[i]);
+        for (int i = 0; i < num_str; i++) {
+            if (i > 0) printf(" ");
+            printf("%s", strings[i]);
         }
 
         printf(" int:");
-        for (int i = 0; i < qtd_int; i++) {
-            printf("%s%d", (i ? " " : ""), inteiros[i]);
+        for (int i = 0; i < num_ints; i++) {
+            if (i > 0) printf(" ");
+            printf("%d", ints[i]);
         }
 
         printf(" float:");
-        for (int i = 0; i < qtd_float; i++) {
-            printf("%s%.2g", (i ? " " : ""), reais[i]);
+        for (int i = 0; i < num_float; i++) {
+            if (i > 0) printf(" ");
+            printf("%g", floats[i]);
         }
 
         printf(" p:");
-        for (int i = 0; i < qtd_ponto; i++) {
-            printf("%s(%.1f,%.1f)", (i ? " " : ""), pontos[i].x, pontos[i].y);
+        for (int i = 0; i < num_points; i++) {
+            if (i > 0) printf(" ");
+            printf("%s", points[i].original);
         }
 
         printf("\n");
