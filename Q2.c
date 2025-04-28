@@ -10,7 +10,7 @@
 typedef struct {
     double x, y;
     double dist;
-    char original[32];
+    char original[64];
 } Point;
 
 int is_integer(const char *s) {
@@ -70,15 +70,15 @@ int main() {
     FILE *fp_in = fopen("L0Q2.in", "r");
     FILE *fp_out = fopen("L0Q2.out", "w");
     
-    if (fp_in == NULL || fp_out == NULL) {
+    if (!fp_in || !fp_out) {
         perror("Erro ao abrir arquivo");
-        return EXIT_FAILURE;
+        return 1;
     }
 
     char line[MAX_LINE];
 
     while (fgets(line, sizeof(line), fp_in)) {
-        line[strcspn(line, "\n")] = '\0';  
+        line[strcspn(line, "\n")] = '\0'; 
 
         char *tokens[MAX_TOKENS];
         int num_tokens = 0;
@@ -97,7 +97,7 @@ int main() {
 
         for (int i = 0; i < num_tokens; i++) {
             double x, y;
-            char original[32];
+            char original[64];
             if (is_point(tokens[i], &x, &y, original)) {
                 points[num_points].x = x;
                 points[num_points].y = y;
@@ -117,36 +117,32 @@ int main() {
         qsort(ints, num_ints, sizeof(int), cmp_int);
         qsort(floats, num_float, sizeof(double), cmp_double);
         qsort(points, num_points, sizeof(Point), cmp_point);
-
+        
         fprintf(fp_out, "str:");
         for (int i = 0; i < num_str; i++) {
-            if (i > 0) fprintf(fp_out, " ");
-            fprintf(fp_out, "%s", strings[i]);
+            fprintf(fp_out, "%s%s", (i > 0 ? " " : ""), strings[i]);
         }
 
         fprintf(fp_out, " int:");
         for (int i = 0; i < num_ints; i++) {
-            if (i > 0) fprintf(fp_out, " ");
-            fprintf(fp_out, "%d", ints[i]);
+            fprintf(fp_out, "%s%d", (i > 0 ? " " : ""), ints[i]);
         }
 
         fprintf(fp_out, " float:");
         for (int i = 0; i < num_float; i++) {
-            if (i > 0) fprintf(fp_out, " ");
-            fprintf(fp_out, "%g", floats[i]);
+            fprintf(fp_out, "%s%.15g", (i > 0 ? " " : ""), floats[i]);
         }
 
         fprintf(fp_out, " p:");
         for (int i = 0; i < num_points; i++) {
-            if (i > 0) fprintf(fp_out, " ");
-            fprintf(fp_out, "%s", points[i].original);
+            fprintf(fp_out, "%s%s", (i > 0 ? " " : ""), points[i].original);
         }
 
         fprintf(fp_out, "\n");
     }
-    
+
     fclose(fp_in);
     fclose(fp_out);
-    
+
     return 0;
 }
