@@ -67,6 +67,9 @@ int cmp_point(const void *a, const void *b) {
 }
 
 int main() {
+    FILE *fp_in = fopen("L0Q2.in", "r");
+    FILE *fp_out = fopen("L0Q2.out", "w");
+    
     char line[MAX_LINE];
 
     while (fgets(line, sizeof(line), stdin)) {
@@ -136,6 +139,9 @@ int main() {
 
         printf("\n");
     }
-
+    
+    fclose(fp_in);
+    fclose(fp_out); 
+    
     return 0;
 }
