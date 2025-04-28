@@ -70,10 +70,15 @@ int main() {
     FILE *fp_in = fopen("L0Q2.in", "r");
     FILE *fp_out = fopen("L0Q2.out", "w");
     
+    if (fp_in == NULL || fp_out == NULL) {
+        perror("Erro ao abrir arquivo");
+        return EXIT_FAILURE;
+    }
+
     char line[MAX_LINE];
 
-    while (fgets(line, sizeof(line), stdin)) {
-        line[strcspn(line, "\n")] = '\0';
+    while (fgets(line, sizeof(line), fp_in)) {
+        line[strcspn(line, "\n")] = '\0';  
 
         char *tokens[MAX_TOKENS];
         int num_tokens = 0;
@@ -113,35 +118,35 @@ int main() {
         qsort(floats, num_float, sizeof(double), cmp_double);
         qsort(points, num_points, sizeof(Point), cmp_point);
 
-        printf("str:");
+        fprintf(fp_out, "str:");
         for (int i = 0; i < num_str; i++) {
-            if (i > 0) printf(" ");
-            printf("%s", strings[i]);
+            if (i > 0) fprintf(fp_out, " ");
+            fprintf(fp_out, "%s", strings[i]);
         }
 
-        printf(" int:");
+        fprintf(fp_out, " int:");
         for (int i = 0; i < num_ints; i++) {
-            if (i > 0) printf(" ");
-            printf("%d", ints[i]);
+            if (i > 0) fprintf(fp_out, " ");
+            fprintf(fp_out, "%d", ints[i]);
         }
 
-        printf(" float:");
+        fprintf(fp_out, " float:");
         for (int i = 0; i < num_float; i++) {
-            if (i > 0) printf(" ");
-            printf("%g", floats[i]);
+            if (i > 0) fprintf(fp_out, " ");
+            fprintf(fp_out, "%g", floats[i]);
         }
 
-        printf(" p:");
+        fprintf(fp_out, " p:");
         for (int i = 0; i < num_points; i++) {
-            if (i > 0) printf(" ");
-            printf("%s", points[i].original);
+            if (i > 0) fprintf(fp_out, " ");
+            fprintf(fp_out, "%s", points[i].original);
         }
 
-        printf("\n");
+        fprintf(fp_out, "\n");
     }
     
     fclose(fp_in);
-    fclose(fp_out); 
+    fclose(fp_out);
     
     return 0;
 }
